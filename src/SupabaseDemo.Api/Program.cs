@@ -8,6 +8,7 @@ Env.Load();
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
+builder.Services.AddControllers();
 
 #region Configure Supabase
 
@@ -48,24 +49,6 @@ if (app.Environment.IsDevelopment())
 
 #region Endpoints
 
-// create newsletter
-app.MapPost("/newsletter", async (
-    CreateNewsletterRequest request,
-    Client client) =>
-{
-    var newsletter = new Newsletter
-    {
-        Name = request.Name,
-        Description = request.Description,
-        ReadTime = request.ReadTime
-    };
-
-    var response = await client.From<Newsletter>().Insert(newsletter);
-
-    var newNewsletter = response.Models.First(); 
-    
-    return Results.Ok(newNewsletter.Id);
-});
 
 // get newsletter
 app.MapGet("/newsletters/{id:long}", async
@@ -88,7 +71,9 @@ app.MapGet("/newsletters/{id:long}", async
        Name = newsletter.Name,
        Description = newsletter.Description,
        ReadTime = newsletter.ReadTime,
-       CreatedAt = newsletter.CreatedAt
+       CreatedAt = newsletter.CreatedAt,
+       ImageUrl = client.Storage.From("cover-images")
+           .GetPublicUrl($"newsletter-{id}.png")
    };
    
    return Results.Ok(newsletterResponse);
@@ -101,12 +86,17 @@ app.MapDelete("/newsletters/{id:long}", async
     await client.From<Newsletter>()
         .Where(n => n.Id == id)
         .Delete();
+    
+    // removing file
+    await client.Storage.From("cover-images")
+        .Remove(new List<string> { "cover-images.png" });
 
     return Results.NoContent();
 });
 
 #endregion
 
+app.MapControllers();
 app.UseHttpsRedirection();
 
 app.Run();
