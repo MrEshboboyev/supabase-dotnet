@@ -1,6 +1,9 @@
+using DotNetEnv;
 using Supabase;
 using SupabaseDemo.Api.Contracts;
 using SupabaseDemo.Api.Models;
+
+Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,14 +11,31 @@ builder.Services.AddOpenApi();
 
 #region Configure Supabase
 
+//// Option : using DotnetEnv with .env files
+
+// Access the environment variables
+var supabaseUrl = Environment.GetEnvironmentVariable("SUPABASE_URL")!;
+var supabaseKey = Environment.GetEnvironmentVariable("SUPABASE_KEY");
+
 builder.Services.AddScoped<Client>(_ => new Client(
-    builder.Configuration["Supabase:Url"]!,
-    builder.Configuration["Supabase:Key"],
-    new SupabaseOptions
-    {
-        AutoRefreshToken = true,
-        AutoConnectRealtime = true
-    }));
+     supabaseUrl,
+     supabaseKey,
+     new SupabaseOptions
+     {
+         AutoRefreshToken = true,
+         AutoConnectRealtime = true
+     }));
+
+
+//// Option : this is using appsettings.json  
+// builder.Services.AddScoped<Client>(_ => new Client(
+//     builder.Configuration["Supabase:Url"]!,
+//     builder.Configuration["Supabase:Key"],
+//     new SupabaseOptions
+//     {
+//         AutoRefreshToken = true,
+//         AutoConnectRealtime = true
+//     }));
 
 #endregion
 
